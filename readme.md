@@ -20,9 +20,10 @@ Circling the result of the finiding algorithm we get:
 
 We want to find pairs of points (x, y, radius, brightness) that point to the same star.
 
-Bright stars have a higher chance to show on both photos, we take them and build a graph between all of them. Here is an exmple for 2 images of same stars:a
+Bright stars have a higher chance to show on both photos, we take them and build a graph between all of them. Here is an exmple for 2 images of stars, only one
+of them is rotated by 180 degrees:
 
-![built-graphs](ReadmeImages/connected.jpg)
+![built-graphs](ReadmeImages/graphs_example.jpg)
 
 After constructing the graph we can compare the length/angle between each node, the point of this is to find 2 stars we can know for sure the correspond to each other.
 After that we can calculate how much we need to transform each stars poision/rotation/scale from image1 to match image2.

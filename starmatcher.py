@@ -337,40 +337,40 @@ class StarMatcher:
 
         find_match()
 
-        img = cv2.imread("connected.jpg")
-        height, width = img.shape[:2]
+        # img = cv2.imread("connected.jpg")
+        # height, width = img.shape[:2]
         
-        for i in range(0, len(possible_matches)):
-            line1, line2 = possible_matches[i]
+        # for i in range(0, len(possible_matches)):
+        #     line1, line2 = possible_matches[i]
 
-            print(f"found : {graph1.index(line1)} and {graph2.index(line2)} : ")
-            print("offset : ", angleoffset)
+        #     print(f"found : {graph1.index(line1)} and {graph2.index(line2)} : ")
+        #     print("offset : ", angleoffset)
 
-            print("children 1 : ")
-            for i, ang in line1.children:
-                print("\t", i, ang)
+        #     print("children 1 : ")
+        #     for i, ang in line1.children:
+        #         print("\t", i, ang)
 
-            print("children 2 : ")
-            for i, ang in line2.children:
-                print("\t",i, ang)
+        #     print("children 2 : ")
+        #     for i, ang in line2.children:
+        #         print("\t",i, ang)
 
-            used_indexes1, used_indexes2 = [], []
+        #     used_indexes1, used_indexes2 = [], []
 
-            for i, child1 in enumerate(line1.children):
-                child1line1, angle1 = child1
-                for j, child2 in enumerate(line2.children):
-                    child1line2, angle2 = child2
-                    if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
-                        print("\tdiff = ", angle1 - angle2)
-                        used_indexes1.append(i)
-                        used_indexes2.append(j)
+        #     for i, child1 in enumerate(line1.children):
+        #         child1line1, angle1 = child1
+        #         for j, child2 in enumerate(line2.children):
+        #             child1line2, angle2 = child2
+        #             if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
+        #                 print("\tdiff = ", angle1 - angle2)
+        #                 used_indexes1.append(i)
+        #                 used_indexes2.append(j)
 
-            temppos1 = line2.star1.iposition
-            temppos2 = line2.star2.iposition
+        #     temppos1 = line2.star1.iposition
+        #     temppos2 = line2.star2.iposition
 
-            cv2.line(img, line1.star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
-            cv2.line(img, line1.star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
-            cv2.imwrite("temp.jpg", img)
+        #     cv2.line(img, line1.star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
+        #     cv2.line(img, line1.star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
+        #     cv2.imwrite("temp.jpg", img)
 
 
 
