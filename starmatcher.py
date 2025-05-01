@@ -311,12 +311,12 @@ class StarMatcher:
             print(f"comparing : {graph1.index(line1)} and {graph2.index(line2)} : ")
 
             for i, child1 in enumerate(line1.children):
-                child1line1, angle1 = child1
+                childline1, angle1 = child1
                 for j, child2 in enumerate(line2.children):
-                    child1line2, angle2 = child2
+                    childline2, angle2 = child2
                     if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
                         print("\tdiff = ", angle1 - angle2)
-                        temp_matches.append((child1line1.children, child1line2.children, i, j))
+                        temp_matches.append((childline1.children, childline2.children, i, j))
                         used_indexes1.append(i)
                         used_indexes2.append(j)
 
@@ -368,8 +368,8 @@ class StarMatcher:
             temppos1 = line2.star1.iposition
             temppos2 = line2.star2.iposition
 
-            cv2.line(img, line1.star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (0, 0, 255))
-            cv2.line(img, line1.star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (0, 0, 255))
+            cv2.line(img, line1.star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
+            cv2.line(img, line1.star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
             cv2.imwrite("temp.jpg", img)
 
 
