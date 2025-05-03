@@ -1,10 +1,11 @@
+import cv2
 from starmatcher import StarMatcher, Star, LineNode
 import utils
 
 matcher = StarMatcher(200)
 
-stars1 = matcher.detect_stars("fr1.jpg")
-stars2 = matcher.detect_stars("fr2.jpg")
+stars1 = matcher.detect_stars("fr1temp.jpg")
+stars2 = matcher.detect_stars("fr2temp.jpg")
 
 graph1 = matcher.build_graph(stars1)
 graph2 = matcher.build_graph(stars2)

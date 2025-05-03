@@ -1,6 +1,4 @@
-## Part 1 - TODO
-
-## Part 2 - Identifing Stars
+## Part 1 + Part 2 - Identifing Stars
 
 We want to identify stars in an image.
 
@@ -28,8 +26,24 @@ of them is rotated by 180 degrees:
 After constructing the graph we can compare the length/angle between each node, the point of this is to find 2 stars we can know for sure the correspond to each other.
 After that we can calculate how much we need to transform each stars poision/rotation/scale from image1 to match image2.
 
-We select the brightest stars from each picture and iterate through the graphs until we find a matching line.
+We select the brightest stars from each picture and iterate through the graphs until we find a matching line using angles only.
 
 ![located-line](ReadmeImages/located-lines.jpg)
+
+
+After finiding a line with enough matching angles we make sure using the ratio between the lengths of each conencted child line, example on zoom in image:
+
+![located-line-zoom-rotation](/ReadmeImages/match_zoom_rotate.jpg)
+
+After finding 2 lines that probably match, we can calculate the transfrom, example for the lines above (from the left image to right image):
+
+```
+transform =  {
+    'scale': 1.2108014753914285,
+    'rotation_radians': -3.0485913487861405,
+    'rotation_degrees': -174.67141774554096,
+    'translation': (2980.2572237960335, 3841.5966005665728)
+}
+```
 
 # Part 4 - TODO 

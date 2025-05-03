@@ -44,7 +44,9 @@ def connect_images(*image_paths, output_path="connected.jpg"):
 
     cv2.imwrite(output_path, connected_img)
     print(f"Saved output to: {output_path}")
-    
+
+    return resized_images
+
 
 def draw_stars(image_path : str, matcher : StarMatcher, output_path="output_with_stars.jpg",
                 radiusmul=3, color=(0, 0, 255), thickness=2):

@@ -13,6 +13,8 @@ class LineNode:
         self.star2 = star2
         self.length = math.hypot(star1.x - star2.x, star1.y - star2.y)
         self.children : list[tuple[LineNode, float]] = []
+        self.children1 : list[LineNode] = []
+        self.children2 : list[LineNode] = []
 
     def add_child(self, line : "LineNode"):
         """Connect another LineNode to the current line
@@ -28,7 +30,11 @@ class LineNode:
         if not LineNode.has_one_common_star(self, line): return False
         if self.children.count(line) != 0: return False
 
+        common = LineNode.get_common_star(self, line)
         angle, _ = LineNode.calc_inner_angle(self, line)
+
+        if common == self.star1: self.children1.append(line)
+        else: self.children2.append(line)
 
         self.children.append((line, angle))
         return True

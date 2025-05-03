@@ -122,10 +122,14 @@ class StarMatcher:
         return matching
 
     @staticmethod 
-    def match_stars(graph1 : list[LineNode], graph2 : list[LineNode], min_matches=5, offset=0.01):
-        possible_matches : list[tuple[LineNode, LineNode]] = []
+    def match_stars(graph1 : list[LineNode], graph2 : list[LineNode], min_matches=5, angle_offset=0.01, dist_offset=0.05):
+        possible_matches : list[tuple[
+                LineNode,
+                LineNode,
+                list[tuple[LineNode, LineNode, int, int]]
+            ]] = []
 
-        angleoffset = 360 * offset
+        angleoffset = 360 * angle_offset
 
         def childrenSort(graph : list["LineNode"]): 
             graph.sort(key=lambda line: len(line.children), reverse=True)
@@ -133,78 +137,121 @@ class StarMatcher:
         childrenSort(graph1)
         childrenSort(graph2)
 
-        def test_lines(line1 : LineNode, line2 : LineNode):
+        def test_lines(line1 : LineNode, line2 : LineNode): 
             temp_matches = []
-            failed_matches = []
             used_indexes1 = []
             used_indexes2 = []
-
-            print(f"comparing : {graph1.index(line1)} and {graph2.index(line2)} : ")
 
             for i, child1 in enumerate(line1.children):
                 childline1, angle1 = child1
                 for j, child2 in enumerate(line2.children):
                     childline2, angle2 = child2
                     if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
-                        print("\tdiff = ", angle1 - angle2)
-                        temp_matches.append((childline1.children, childline2.children, i, j))
+                        temp_matches.append((childline1, childline2, i, j))
                         used_indexes1.append(i)
                         used_indexes2.append(j)
 
             if len(temp_matches) >= min_matches:
-                print(f"found : {graph1.index(line1)} and {graph2.index(line2)} !!! ")
-                possible_matches.append((line1, line2))
+                possible_matches.append((line1, line2, temp_matches))
                 return True
             return False
 
-        def find_match():
-            # Assume image was scaled proportionally - Compare angles only
-            for line1 in graph1:
-                if len(line1.children) < 2: continue
-                for line2 in graph2:
-                    if len(line2.children) < 2: continue
-                    result = test_lines(line1, line2)
-                    if result: return
-
-        find_match()
-
-        # img = cv2.imread("connected.jpg")
-        # height, width = img.shape[:2]
+        # Assume image was scaled proportionally - Compare angles only
+        for line1 in graph1:
+            if len(line1.children) < 2: continue
+            for line2 in graph2:
+                if len(line2.children) < 2: continue
+                result = test_lines(line1, line2)
         
-        # for i in range(0, len(possible_matches)):
-        #     line1, line2 = possible_matches[i]
-
-        #     print(f"found : {graph1.index(line1)} and {graph2.index(line2)} : ")
-        #     print("offset : ", angleoffset)
-
-        #     print("children 1 : ")
-        #     for i, ang in line1.children:
-        #         print("\t", i, ang)
-
-        #     print("children 2 : ")
-        #     for i, ang in line2.children:
-        #         print("\t",i, ang)
-
-        #     used_indexes1, used_indexes2 = [], []
-
-        #     for i, child1 in enumerate(line1.children):
-        #         child1line1, angle1 = child1
-        #         for j, child2 in enumerate(line2.children):
-        #             child1line2, angle2 = child2
-        #             if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
-        #                 print("\tdiff = ", angle1 - angle2)
-        #                 used_indexes1.append(i)
-        #                 used_indexes2.append(j)
-
-        #     temppos1 = line2.star1.iposition
-        #     temppos2 = line2.star2.iposition
-
-        #     cv2.line(img, line1.star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
-        #     cv2.line(img, line1.star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
-        #     cv2.imwrite("temp.jpg", img)
-
-
-
-
+        if len(possible_matches) == 0: return []
         
+        possible_matches.sort(key=lambda obj: len(obj[2]), reverse=True)
+
+        # Test for distances
+        def test_lengths():
+            for line1, line2, matches in possible_matches:
+                for child1, child2, i1, j1 in matches:
+                    assumed_zoom = child1.length / child2.length
+
+                    found_match = True
+                    for test1, test2, i2, j2 in matches:
+                        if i1 == i2 and j1 == j2: continue
+                    
+                        if abs((test1.length / test2.length) / assumed_zoom - 1) > dist_offset:
+                            found_match = False
+                            break
                 
+                    if found_match:
+                        return (line1, line2, matches)
+                    
+        correct_guess = test_lengths()
+
+        if correct_guess == None: return []
+
+        # find matching stars in the correct guess
+        s1s1_match = True
+        s1s1_count = 0
+        
+        line1, line2, matches = correct_guess
+        for l1, l2, i, j in matches: 
+            if line1.children1.count(l1) != 0 and line2.children2.count(l2) != 0:
+                s1s1_count += 1
+        
+        if not s1s1_count >= len(matches) // 2: s1s1_match = False
+
+        p1, p2 = line1.star1.iposition, line1.star2.iposition
+        p3, p4 = line2.star1.iposition, line2.star2.iposition
+        if not s1s1_match: p3, p4 = p4, p3
+
+        transform = transform_between_lines(p1, p2, p3, p4)
+
+        print("transform = ", transform)
+
+        img = cv2.imread("connected.jpg")
+        height, width = img.shape[:2]
+
+        temppos1 = correct_guess[1].star1.iposition
+        temppos2 = correct_guess[1].star2.iposition
+
+        cv2.line(img, correct_guess[0].star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
+        cv2.line(img, correct_guess[0].star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
+        cv2.imwrite("temp.jpg", img)
+
+def distance(a, b):
+    return math.hypot(b[0] - a[0], b[1] - a[1])
+
+def angle_between(v1, v2):
+    dot = v1[0]*v2[0] + v1[1]*v2[1]
+    det = v1[0]*v2[1] - v1[1]*v2[0]
+    return math.atan2(det, dot)
+
+def transform_between_lines(p1, p2, p3, p4):
+    # Vectors
+    v1 = (p2[0] - p1[0], p2[1] - p1[1])
+    v2 = (p4[0] - p3[0], p4[1] - p3[1])
+
+    # Scale (zoom)
+    len1 = distance(p1, p2)
+    len2 = distance(p3, p4)
+    scale = len2 / len1 if len1 != 0 else 0
+
+    # Rotation
+    angle = angle_between(v1, v2)
+
+    # Apply rotation and scaling to p1
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    sx, sy = p1[0] * scale, p1[1] * scale
+    rx = cos_a * sx - sin_a * sy
+    ry = sin_a * sx + cos_a * sy
+
+    # Translation
+    tx = p3[0] - rx
+    ty = p3[1] - ry
+
+    return {
+        'scale': scale,
+        'rotation_radians': angle,
+        'rotation_degrees': math.degrees(angle),
+        'translation': (tx, ty)
+    }
