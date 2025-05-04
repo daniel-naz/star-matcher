@@ -41,8 +41,9 @@ After finding 2 lines that probably match, we can calculate the transfrom, examp
 transform =  {
     'scale': 1.2108014753914285,
     'rotation_radians': -3.0485913487861405,
-    'rotation_degrees': -174.67141774554096,
-    'translation': (2980.2572237960335, 3841.5966005665728)
+    'rotation_degrees': -174.67141774554096, 
+    'origin': (2180, 1413), 
+    'translation': (511, 1893)
 }
 ```
 

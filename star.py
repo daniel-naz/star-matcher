@@ -1,4 +1,3 @@
-
 class Star:
     def __init__(self, x : float, y : float, b : float, r : float):
         """Create a star object to keep track of star properties
@@ -13,6 +12,8 @@ class Star:
         self.y = y
         self.b = b
         self.r = r
+
+        self.lines = []
 
     @property
     def position(self):

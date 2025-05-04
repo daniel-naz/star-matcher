@@ -1,3 +1,4 @@
+import random
 from star import Star
 from linenode import LineNode
 import cv2
@@ -5,7 +6,7 @@ import math
 
 class StarMatcher: 
 
-    def __init__(self, brightness_threshold=200, min_cluster_size=3):
+    def __init__(self, brightness_threshold=200, min_cluster_size=3, max_graph_dist=800):
         """Create a new star identification object.
 
         Args:
@@ -15,8 +16,9 @@ class StarMatcher:
         
         self.brightness_threshold = brightness_threshold
         self.min_cluster = min_cluster_size
+        self.max_graph_dist = max_graph_dist
 
-    def build_graph(self, stars : list[Star], max_dist=800):
+    def build_graph(self, stars : list[Star]):
         """Construct a line graph connecting all the bright stars
 
         Args:
@@ -26,30 +28,29 @@ class StarMatcher:
         lines : list[LineNode] = []
 
         # Create uniqe lines
-        for star1 in stars:
-            for star2 in stars:
-                # Make sure the line isn't of length 0
-                if star1 == star2: continue
-
+        n = len(stars)
+        for i in range(n):
+            for j in range(i + 1, n):
                 # Create the line
-                templine = LineNode(star1, star2)
+                templine = LineNode(stars[i], stars[j])
                 
                 # Make sure length is valid
-                if templine.length > max_dist: continue
-
-                # Make sure the line wasn't already added
-                flag = True
-                for line in lines:
-                    if templine == line:
-                        flag = False
-                        break
+                if templine.length > self.max_graph_dist: continue
                 
-                if flag: lines.append(templine)
+                lines.append(templine)
+                stars[i].lines.append(templine)
+                stars[j].lines.append(templine)
 
         # Create graph by connecting lines
-        for line1 in lines:
-            for line2 in lines:
-                res = line1.add_child(line2)
+        for s in stars:
+            n = len(s.lines)
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    if i == j: continue
+                    angle, _ = LineNode.calc_inner_angle(s.lines[i], s.lines[j])
+                    s.lines[i].add_child(s.lines[j], angle)
+                    s.lines[j].add_child(s.lines[i], angle)
 
         return lines
 
@@ -104,25 +105,27 @@ class StarMatcher:
                         avg_y = sy / len(cluster)
                         avg_brightness = sum(get_pixel(cx, cy) for cx, cy in cluster) / len(cluster)
                         max_r = max(math.hypot(cx - avg_x, cy - avg_y) for cx, cy in cluster)
-                        stars.append(Star(int(avg_x), int(avg_y), int(avg_brightness), max_r))
+                        stars.append(Star(avg_x, avg_y, int(avg_brightness), max_r))
 
         stars = [s for s in stars if s.r != 0]
         return stars
 
-    def detect_matching_stars(self, image_path1 : str, image_path2 : str):
+    def detect_matching_stars(self, image_path1 : str, image_path2 : str, min_matches=5, angle_offset=0.01, dist_offset=0.05, match_offset=None):
         """Find and match stars from 2 different images
 
         Returns:
             (list[tuple[Star, Star]]): List of matching stars. index 0 = image 1, index 1 = image 2.
         """
-        graph1 = self.build_graph(self.detect_stars(image_path1))
-        graph2 = self.build_graph(self.detect_stars(image_path2))
+        stars1 = self.detect_stars(image_path1)
+        stars2 = self.detect_stars(image_path2) 
+        graph1 = self.build_graph(stars1)
+        graph2 = self.build_graph(stars2)
 
-        matching = StarMatcher.match_stars(graph1, graph2)
+        matching = StarMatcher.match_stars(stars1, stars2, graph1, graph2, cv2.imread(image_path1).shape[1], min_matches, angle_offset, dist_offset, match_offset)
         return matching
 
     @staticmethod 
-    def match_stars(graph1 : list[LineNode], graph2 : list[LineNode], min_matches=5, angle_offset=0.01, dist_offset=0.05):
+    def match_stars(stars1 : list[Star], stars2 : list[Star], graph1 : list[LineNode], graph2 : list[LineNode], offset_width, min_matches=5, angle_offset=0.000005, dist_offset=0.0001, match_offset=None):
         possible_matches : list[tuple[
                 LineNode,
                 LineNode,
@@ -130,6 +133,15 @@ class StarMatcher:
             ]] = []
 
         angleoffset = 360 * angle_offset
+
+        if match_offset == None:
+            match_offset = 100000
+
+            for s1 in stars2: 
+                for s2 in stars2:       
+                    if s1 == s2: continue
+                    match_offset = min(match_offset, distance(s1.position, s2.position)) 
+            match_offset /= 2
 
         def childrenSort(graph : list["LineNode"]): 
             graph.sort(key=lambda line: len(line.children), reverse=True)
@@ -142,14 +154,29 @@ class StarMatcher:
             used_indexes1 = []
             used_indexes2 = []
 
+            first = True
+            assumed_zoom = 1
+
             for i, child1 in enumerate(line1.children):
                 childline1, angle1 = child1
                 for j, child2 in enumerate(line2.children):
                     childline2, angle2 = child2
-                    if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
-                        temp_matches.append((childline1, childline2, i, j))
-                        used_indexes1.append(i)
-                        used_indexes2.append(j)
+
+                    if first:
+                        if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
+                            temp_matches.append((childline1, childline2))
+                            used_indexes1.append(i)
+                            used_indexes2.append(j)
+                            assumed_zoom = childline1.length / childline2.length
+                            first = False
+                            
+                    else:
+                        if abs(angle1 - angle2) < angleoffset and used_indexes1.count(i) == 0 and used_indexes2.count(j) == 0:
+                            if abs((childline1.length / childline2.length) / assumed_zoom - 1) > dist_offset:
+                                temp_matches.append((childline1, childline2))
+                                used_indexes1.append(i)
+                                used_indexes2.append(j)
+                        
 
             if len(temp_matches) >= min_matches:
                 possible_matches.append((line1, line2, temp_matches))
@@ -159,6 +186,7 @@ class StarMatcher:
         # Assume image was scaled proportionally - Compare angles only
         for line1 in graph1:
             if len(line1.children) < 2: continue
+
             for line2 in graph2:
                 if len(line2.children) < 2: continue
                 result = test_lines(line1, line2)
@@ -167,55 +195,67 @@ class StarMatcher:
         
         possible_matches.sort(key=lambda obj: len(obj[2]), reverse=True)
 
-        # Test for distances
-        def test_lengths():
-            for line1, line2, matches in possible_matches:
-                for child1, child2, i1, j1 in matches:
-                    assumed_zoom = child1.length / child2.length
-
-                    found_match = True
-                    for test1, test2, i2, j2 in matches:
-                        if i1 == i2 and j1 == j2: continue
-                    
-                        if abs((test1.length / test2.length) / assumed_zoom - 1) > dist_offset:
-                            found_match = False
-                            break
-                
-                    if found_match:
-                        return (line1, line2, matches)
-                    
-        correct_guess = test_lengths()
-
-        if correct_guess == None: return []
+        correct_guess = possible_matches[0]
 
         # find matching stars in the correct guess
-        s1s1_match = True
-        s1s1_count = 0
+        correct_guess = possible_matches[0]
         
         line1, line2, matches = correct_guess
-        for l1, l2, i, j in matches: 
-            if line1.children1.count(l1) != 0 and line2.children2.count(l2) != 0:
-                s1s1_count += 1
-        
-        if not s1s1_count >= len(matches) // 2: s1s1_match = False
 
-        p1, p2 = line1.star1.iposition, line1.star2.iposition
-        p3, p4 = line2.star1.iposition, line2.star2.iposition
-        if not s1s1_match: p3, p4 = p4, p3
+        p1, p2 = line1.star1.position, line1.star2.position
+        p3, p4 = line2.star1.position, line2.star2.position
+
+        child1, child2 = matches[0]
+        is_p1 = line1.children1.count(child1) > 0
+        is_p3 = line2.children1.count(child2) > 0
+
+        if (is_p1 or not is_p3) or (not is_p1 or is_p3):
+            p3, p4 = p4, p3 
 
         transform = transform_between_lines(p1, p2, p3, p4)
 
         print("transform = ", transform)
 
-        img = cv2.imread("connected.jpg")
-        height, width = img.shape[:2]
+        # FINALLY! match the stars
+        img = cv2.imread("temp.jpg")
 
-        temppos1 = correct_guess[1].star1.iposition
-        temppos2 = correct_guess[1].star2.iposition
+        result : list[tuple[Star, Star]]= []        
+        transformed_positions = []
+        for star1 in stars1:
+            transformed_positions.append(apply_transform(transform, star1.position))
+        
+        for l1, l2, m in possible_matches:
+            color = (255, 0, 0)
+            
+            cv2.line(img, l1.star1.iposition, l1.star2.iposition, color, 2)
+            cv2.line(img, (l2.star1.iposition[0] + offset_width, l2.star1.iposition[1]), (l2.star2.iposition[0] + offset_width, l2.star2.iposition[1]), color, 2)
 
-        cv2.line(img, correct_guess[0].star1.iposition, (temppos1[0] + int(width / 2), temppos1[1]), (255, 255, 255))
-        cv2.line(img, correct_guess[0].star2.iposition, (temppos2[0] + int(width / 2), temppos2[1]), (255, 255, 255))
-        cv2.imwrite("temp.jpg", img)
+        for i, star2 in enumerate(stars2):
+            for j, pos in enumerate(transformed_positions):
+                if distance(star2.iposition, pos) < match_offset:
+                    result.append((stars1[j], star2))
+                # cv2.line(img, stars1[j].iposition, (int(pos[0] + offset_width), pos[1]),  (random.randint(0, 255),
+                #     random.randint(0, 255),
+                #     random.randint(0, 255)), 2)
+                
+        cv2.circle(img, (int(p1[0]), int(p1[1])), 20, (255, 0,255), 5)
+        cv2.circle(img, (offset_width + int(p3[0]), int(p3[1])), 20, (255, 0,255), 5)
+        cv2.circle(img, (int(p2[0]), int(p2[1])), 20, (0, 255,255), 5)
+        cv2.circle(img, (offset_width + int(p4[0]), int(p4[1])), 20, (0, 255,255), 5)
+
+        for i, j in matches:
+            print(f"{i} matches {j}")
+
+        cv2.imwrite("temp2.jpg", img)
+        return result
+
+def distance(a, b):
+    return math.hypot(b[0] - a[0], b[1] - a[1])
+
+def angle_between(v1, v2):
+    dot = v1[0]*v2[0] + v1[1]*v2[1]
+    det = v1[0]*v2[1] - v1[1]*v2[0]
+    return math.atan2(det, dot)
 
 def distance(a, b):
     return math.hypot(b[0] - a[0], b[1] - a[1])
@@ -226,32 +266,50 @@ def angle_between(v1, v2):
     return math.atan2(det, dot)
 
 def transform_between_lines(p1, p2, p3, p4):
-    # Vectors
+    # Vector from p1 to p2 and p3 to p4
     v1 = (p2[0] - p1[0], p2[1] - p1[1])
     v2 = (p4[0] - p3[0], p4[1] - p3[1])
 
-    # Scale (zoom)
+    # Scale
     len1 = distance(p1, p2)
     len2 = distance(p3, p4)
     scale = len2 / len1 if len1 != 0 else 0
 
     # Rotation
-    angle = angle_between(v1, v2)
+    angle = angle_between(v1, v2) 
 
-    # Apply rotation and scaling to p1
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
-    sx, sy = p1[0] * scale, p1[1] * scale
-    rx = cos_a * sx - sin_a * sy
-    ry = sin_a * sx + cos_a * sy
-
-    # Translation
-    tx = p3[0] - rx
-    ty = p3[1] - ry
+    # Final translation: align transformed p1 with p3
+    translation = p3  # we’ll apply rotation & scale around p1, then shift to p3
 
     return {
         'scale': scale,
         'rotation_radians': angle,
         'rotation_degrees': math.degrees(angle),
-        'translation': (tx, ty)
+        'origin': p1,
+        'translation': translation
     }
+
+def apply_transform(transform, point):
+    scale = transform['scale']
+    angle = transform['rotation_radians']
+    ox, oy = transform['origin']
+    tx, ty = transform['translation']
+
+    # Step 1: Translate point so origin becomes (0,0)
+    px, py = point[0] - ox, point[1] - oy
+
+    # Step 2: Scale
+    px *= scale
+    py *= scale
+
+    # Step 3: Rotate
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    x_rot = cos_a * px - sin_a * py
+    y_rot = sin_a * px + cos_a * py
+
+    # Step 4: Translate to final position
+    x_final = x_rot + tx
+    y_final = y_rot + ty
+
+    return (int(x_final), int(y_final))

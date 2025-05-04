@@ -1,6 +1,7 @@
 import math
 import random
 import cv2
+import numpy as np
 from starmatcher import StarMatcher, LineNode
 
 import cv2
@@ -30,14 +31,13 @@ def connect_images(*image_paths, output_path="connected.jpg"):
             raise ValueError(f"Cannot load image: {path}")
         images.append(img)
 
-    min_height = min(img.shape[0] for img in images)
+    max_height = max(img.shape[0] for img in images)
 
     resized_images = []
     for img in images:
         h, w = img.shape[:2]
-        scale = min_height / h
-        new_w = int(w * scale)
-        resized_img = cv2.resize(img, (new_w, min_height))
+        resized_img = np.full((max_height, w, 3), 255, dtype=np.uint8)
+        resized_img[:h, :] = img
         resized_images.append(resized_img)
 
     connected_img = cv2.hconcat(resized_images)

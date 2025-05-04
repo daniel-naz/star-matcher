@@ -16,28 +16,15 @@ class LineNode:
         self.children1 : list[LineNode] = []
         self.children2 : list[LineNode] = []
 
-    def add_child(self, line : "LineNode"):
-        """Connect another LineNode to the current line
+    def add_child(self, line : "LineNode", angle : float):
+        self.children.append((line, angle))
 
-        Args:
-            line (LineNode): The line to connect, must have one common point.
-
-        Returns:
-            bool: True if child was added, false otherwise
-        """
-
-        if self == line: return False
-        if not LineNode.has_one_common_star(self, line): return False
-        if self.children.count(line) != 0: return False
-
-        common = LineNode.get_common_star(self, line)
-        angle, _ = LineNode.calc_inner_angle(self, line)
-
-        if common == self.star1: self.children1.append(line)
+        if LineNode.get_common_star(self, line) == self.star1: self.children1.append(line)
         else: self.children2.append(line)
 
-        self.children.append((line, angle))
-        return True
+    @property
+    def lengths(self):
+        return (abs(self.star1.position[0] - self.star2.position[0]), abs(self.star1.position[1] - self.star2.position[1]))
 
     @staticmethod
     def get_connetion_order(line1 : "LineNode", line2 : "LineNode"):
@@ -78,12 +65,11 @@ class LineNode:
         Returns:
             (Star | None): Star - when there's exactly 1 common star, None otherwise.
         """
-
-        if not LineNode.has_one_common_star(line1, line2): return None
         if line1.star1 == line2.star1: return line1.star1
         if line1.star2 == line2.star2: return line1.star2
         if line1.star1 == line2.star2: return line1.star1
         if line1.star2 == line2.star1: return line1.star2
+        return None
 
     @staticmethod
     def calc_angle(line1 : "LineNode", line2 : "LineNode"):
