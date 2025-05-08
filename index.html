@@ -1,0 +1,47 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Matcher</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white font-sans p-8">
+
+  <!-- Heading -->
+  <h2 class="text-4xl font-semibold text-center mb-8">Upload Two Night Sky Images</h2>
+
+  <!-- Image Upload and Canvas Containers -->
+  <div class="flex flex-wrap justify-center gap-8 mb-6">
+    <div class="flex flex-col items-center max-w-3xl w-full">
+      <input id="file1" type="file" accept="image/*" class="mb-4 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white">
+      <canvas id="canvas1" class="border-2 border-gray-700 bg-gray-800 w-full h-[600px]"></canvas>
+    </div>
+    <div class="flex flex-col items-center max-w-3xl w-full">
+      <input id="file2" type="file" accept="image/*" class="mb-4 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white">
+      <canvas id="canvas2" class="border-2 border-gray-700 bg-gray-800 w-full h-[600px]"></canvas>
+    </div>
+  </div>
+
+  <!-- Threshold Controls -->
+  <div class="flex flex-col items-center mb-6">
+    <label for="threshold" class="text-lg mb-2">Brightness Threshold:</label>
+    <input id="threshold" type="range" min="60" max="255" value="75" class="w-80 h-2 bg-gray-700 rounded-full appearance-none cursor-pointer mb-4">
+    <span id="thresholdValue" class="text-lg">75</span>
+  </div>
+
+  <!-- Grid Size Slider -->
+  <div class="flex flex-col items-center mb-6">
+    <label for="gridSize" class="text-lg mb-2">Grid Size:</label>
+    <input id="gridSize" type="range" min="20" max="50" value="30" class="w-80 h-2 bg-gray-700 rounded-full appearance-none cursor-pointer mb-4">
+    <span id="gridSizeValue" class="text-lg">30</span>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex justify-center gap-6 mt-6">
+    <button id="recalc" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Recalculate Stars</button>
+    <button id="match" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Match Stars</button>
+  </div>
+
+  <script src="main.js" type="module"></script>
+</body>
+</html>
