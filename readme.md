@@ -23,7 +23,7 @@ to locate the stars.
 
 Our function recieves 4 variables ```image, min_sigma, max_sigma, threshold```.
 
-- image - Path to image file.
+- image - Path to image file / image file.
 - min_sigma - Approx min size of a star.
 - max_sigma - Approx max size of a star.
 - threshold - Min brightness to classify as star, set heigher (aroud 0.1) for images with a lot of light pollution, smaller values (0.02) work well from clear dark skies. 
