@@ -1,7 +1,7 @@
 # Summary 
 In this assignment, we will develop an algorithm for star classification (identification). Given an image of stars.
 
-You can interact with a demo website here : link
+You can interact with a demo website here : [Link](https://daniel-naz.github.io)
 (Use high gridsize for pictures with a lot of stars and low gridsize for a small amout of stars)
 
 ## Part 1 - The Algorithm
