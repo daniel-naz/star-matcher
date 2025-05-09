@@ -1,6 +1,9 @@
 # Summary 
 In this assignment, we will develop an algorithm for star classification (identification). Given an image of stars.
 
+You can interact with a demo website here : link
+(Use high gridsize for pictures with a lot of stars and low gridsize for a small amout of stars)
+
 ## Part 1 - The Algorithm
 
 The algorithm is based on the following presentation : [Link](https://sites.astro.caltech.edu/~moncelsi/FTS_talk.pdf).
@@ -29,3 +32,15 @@ We convert the image to grayscale and calculate the radius and brightness of the
 Here we use the algorithm talked about it Part 1, we first split the image into cells and build geometric features.
 
 ![match1](/readmefiles/match1.png)
+
+
+## Part 4 - Conclusion
+
+The method we used can identify most stars but can also miss some of them depending on the grid size and thresholds. The user
+needs to balace the runtime with the accuracy of the match. 
+
+![alt text](./readmefiles/-example-math1.png)
+![alt text](./readmefiles/example-math1.png)
+
+![alt text](./readmefiles/-example-math2.png)
+![alt text](./readmefiles/example-math2.png)
