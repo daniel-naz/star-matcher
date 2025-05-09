@@ -30,12 +30,12 @@ async function loadImage(fileInput, canvas) {
     return img
 }
 
-    function randomRGB() {
-        const r = Math.floor(Math.random() * 256); // 0–255
-        const g = Math.floor(Math.random() * 256);
-        const b = Math.floor(Math.random() * 256);
-        return `rgb(${r}, ${g}, ${b})`;
-    }
+function randomRGB() {
+    const r = Math.floor(Math.random() * 256); // 0–255
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgb(${r}, ${g}, ${b})`;
+}
 
 function painPoints(p1, p2, ctx1, ctx2) {
     const color = randomRGB()
@@ -72,8 +72,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const matchBtn = document.getElementById('match');
     const thresholdslider = document.getElementById('threshold');
     const gridslider = document.getElementById('gridSize');
+    const toleranceslider = document.getElementById('tolerance');
     const thresholddisplay = document.getElementById('thresholdValue');
     const griddisplay = document.getElementById('gridSizeValue');
+    const tolerancedisplay = document.getElementById('toleranceValue');
 
     thresholdslider.addEventListener('input', () => {
         thresholddisplay.textContent = thresholdslider.value;
@@ -81,33 +83,50 @@ window.addEventListener('DOMContentLoaded', () => {
 
     file1.addEventListener('change', async () => {
         img1 = await loadImage(file1, canvas1)
-        detector.detectStars(canvas1, stars1)
+        // detector.detectStars(canvas1, stars1)
     });
 
     file2.addEventListener('change', async () => {
         img2 = await loadImage(file2, canvas2)
-        detector.detectStars(canvas2, stars2)
+        // detector.detectStars(canvas2, stars2)
     });
 
     recalcBtn.addEventListener('click', () => {
-        // clear and redraw images
         drawImageOnly(canvas1, img1);
         drawImageOnly(canvas2, img2);
-        detector.detectStars(canvas1, stars1)
-        detector.detectStars(canvas2, stars2)
+        let r1 = detector.detectStars(canvas1, stars1)
+        let r2 = detector.detectStars(canvas2, stars2)
+
+        if (!r1 || !r2) {
+            alert("You should use a higher brightness.")
+            return
+        }
     });
 
     gridslider.addEventListener('input', () => {
         griddisplay.textContent = gridslider.value;
     });
 
+    toleranceslider.addEventListener('input', () => {
+        tolerancedisplay.textContent = toleranceslider.value / 10;
+    });
+
     matchBtn.addEventListener('click', () => {
-        if (!img1 || !img2 || !stars1.length || !stars2.length) return;
+        if (!img1 || !img2) return;
 
         drawImageOnly(canvas1, img1);
         drawImageOnly(canvas2, img2);
+        let r1 = detector.detectStars(canvas1, stars1)
+        let r2 = detector.detectStars(canvas2, stars2)
 
-        const matches = matcher.matchStars(stars1, stars2, img1, img2, 29, 0.245);
+        if (!r1 || !r2) {
+            alert("You should use a higher brightness.")
+            return
+        }
+
+        console.log("grid = " + gridslider.value);
+        
+        const matches = matcher.matchStars(stars1, stars2, img1, img2, gridslider.value, toleranceslider.value / 10);
 
         const ctx1 = canvas1.getContext('2d');
         const ctx2 = canvas2.getContext('2d');
@@ -118,7 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
             painPoints(s1[5], s2[5], ctx1, ctx2)
             painPoints(s1[6], s2[6], ctx1, ctx2)
 
-            const c =  randomRGB()
+            const c = randomRGB()
 
             drawLine(ctx1, s1[0].x, s1[0].y, s1[1].x, s1[1].y, c, 1)
             drawLine(ctx1, s1[1].x, s1[1].y, s1[5].x, s1[5].y, c, 1)

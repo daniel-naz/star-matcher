@@ -21,11 +21,11 @@ function* combinationsOf2(arr) {
 }
 
 function createGrid(size) {
-    return new Array(size).fill(0).map((x) =>
-        new Array(size).fill(0).map((y) =>
-            new Array(0)
+    return Array.from({ length: size }, () =>
+        Array.from({ length: size }, () =>
+            [] 
         )
-    )
+    );
 }
 
 function distance(p1, p2) {
@@ -37,18 +37,18 @@ function angleBetweenLines(p0, p1, p2) {
     const v1y = p1.y - p0.y;
     const v2x = p2.x - p1.x;
     const v2y = p2.y - p1.y;
-    
+
     const dotProduct = v1x * v2x + v1y * v2y;
-    
+
     const magnitudeV1 = Math.sqrt(v1x * v1x + v1y * v1y);
     const magnitudeV2 = Math.sqrt(v2x * v2x + v2y * v2y);
-    
+
 
     const cosTheta = dotProduct / (magnitudeV1 * magnitudeV2);
     const clampedCosTheta = Math.min(Math.max(cosTheta, -1), 1);
-    
+
     let angle = Math.acos(clampedCosTheta);
-    
+
     if (angle > Math.PI) {
         angle = 2 * Math.PI - angle;
     }
@@ -128,7 +128,7 @@ function areShapesSimilar(s1, s2, tol = 0.1) {
     return [[s1[0], s1[1], s1[5], s1[6]], [s2[0], s2[1], s2[5], s2[6]]]
 }
 
-function matchStars(stars1, stars2, img1, img2, gridCells = 10, tol = 0.1) {
+function matchStars(stars1, stars2, img1, img2, gridCells = 10, tol = 0.1) {    
     console.log("Creating grid");
     const grid1 = createGrid(gridCells)
     const grid2 = createGrid(gridCells)
@@ -153,7 +153,7 @@ function matchStars(stars1, stars2, img1, img2, gridCells = 10, tol = 0.1) {
     console.log("Creating features");
     const features1 = []
     const features2 = []
-
+    
     for (let i = 0; i < gridCells; i++) {
         for (let j = 0; j < gridCells; j++) {
 
@@ -206,8 +206,8 @@ function matchStars(stars1, stars2, img1, img2, gridCells = 10, tol = 0.1) {
             }
         }
     }
-    console.log(`Found ${result.length} matches.`);
 
+    console.log(`Found ${result.length} matches.`);
     return result
 }
 

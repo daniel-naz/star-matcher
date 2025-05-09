@@ -18,21 +18,14 @@ The algorithm follows these steps:
 
 ## Part 2 - Star Identification
 
-We use the [```feature.blob_log```](https://scikit-image.org/docs/stable/api/skimage.feature.html#skimage.feature.blob_log) 
-to locate the stars.
+We convert the image to grayscale and calculate the radius and brightness of the star.
 
-Our function recieves 4 variables ```image, min_sigma, max_sigma, threshold```.
-
-- image - Path to image file / image file.
-- min_sigma - Approx min size of a star.
-- max_sigma - Approx max size of a star.
-- threshold - Min brightness to classify as star, set heigher (aroud 0.1) for images with a lot of light pollution, smaller values (0.02) work well from clear dark skies. 
-
-![locating-stars-1](/readmefiles/locating-stars-1.jpg)
-![locating-stars-2](/readmefiles/locating-stars-2.jpg)
+![locating-stars-1](/readmefiles/locating-stars-1.png)
+![locating-stars-2](/readmefiles/locating-stars-2.png)
 
 
 ## Part 3 - Star Matching 
 
 Here we use the algorithm talked about it Part 1, we first split the image into cells and build geometric features.
 
+![match1](/readmefiles/match1.png)

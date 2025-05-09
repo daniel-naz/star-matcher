@@ -1,3 +1,5 @@
+import utils from "./utils.js"
+
 function detectStars(canvas, storageArray) {
     const ctx = canvas.getContext('2d');
 
@@ -8,6 +10,10 @@ function detectStars(canvas, storageArray) {
     const threshold = parseInt(document.getElementById('threshold').value, 10);
     const visited = new Set();
     const stars = [];
+
+    if (utils.calculateAverageBrightness(imageData) > threshold) {
+        return
+    }
 
     function getBrightness(r, g, b) {
         return 0.299 * r + 0.587 * g + 0.114 * b;
@@ -68,6 +74,8 @@ function detectStars(canvas, storageArray) {
 
     storageArray.length = 0;
     storageArray.push(...stars);
+
+    return true
 }
 
 export default {
